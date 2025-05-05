@@ -1,0 +1,20 @@
+{
+  "properties": {
+    "path": "dotnet-app-1",
+    "apiRevision": "1",
+    "apiVersion": "v1",
+    "apiVersionSetId": "/subscriptions/715f3e3f-b400-44c4-b41b-353b5d2d0d6b/resourceGroups/wvcsampletest/providers/Microsoft.ApiManagement/service/wvcapiops/apiVersionSets/681890888e47b4184df430c9",
+    "authenticationSettings": {},
+    "description": "Import from \u0022dotnet-app-1\u0022 Function App",
+    "isCurrent": true,
+    "displayName": "dotnet-app-1",
+    "protocols": [
+      "https"
+    ],
+    "subscriptionKeyParameterNames": {
+      "header": "Ocp-Apim-Subscription-Key",
+      "query": "subscription-key"
+    },
+    "subscriptionRequired": true
+  }
+}

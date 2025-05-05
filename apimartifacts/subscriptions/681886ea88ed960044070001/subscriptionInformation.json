@@ -1,0 +1,8 @@
+{
+  "properties": {
+    "scope": "/subscriptions/715f3e3f-b400-44c4-b41b-353b5d2d0d6b/resourceGroups/wvcsampletest/providers/Microsoft.ApiManagement/service/wvcapiops/products/starter",
+    "allowTracing": false,
+    "ownerId": "/subscriptions/715f3e3f-b400-44c4-b41b-353b5d2d0d6b/resourceGroups/wvcsampletest/providers/Microsoft.ApiManagement/service/wvcapiops/users/1",
+    "state": "active"
+  }
+}

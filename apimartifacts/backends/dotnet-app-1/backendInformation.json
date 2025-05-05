@@ -1,0 +1,15 @@
+{
+  "properties": {
+    "credentials": {
+      "header": {
+        "x-functions-key": [
+          "{{dotnet-app-1-key}}"
+        ]
+      }
+    },
+    "description": "dotnet-app-1",
+    "protocol": "http",
+    "resourceId": "https://management.azure.com/subscriptions/715f3e3f-b400-44c4-b41b-353b5d2d0d6b/resourceGroups/Techie-RG/providers/Microsoft.Web/sites/dotnet-app-1",
+    "url": "https://dotnet-app-1.azurewebsites.net/api"
+  }
+}

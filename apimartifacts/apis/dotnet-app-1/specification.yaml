@@ -1,0 +1,28 @@
+openapi: 3.0.1
+info:
+  title: dotnet-app-1
+  description: Import from "dotnet-app-1" Function App
+  version: v1
+servers:
+  - url: https://wvcapiops.azure-api.net/dotnet-app-1/v1
+paths:
+  /PostOrder:
+    post:
+      summary: PostOrder
+      operationId: post-postorder
+      responses:
+        '200':
+          description: ''
+components:
+  securitySchemes:
+    apiKeyHeader:
+      type: apiKey
+      name: Ocp-Apim-Subscription-Key
+      in: header
+    apiKeyQuery:
+      type: apiKey
+      name: subscription-key
+      in: query
+security:
+  - apiKeyHeader: [ ]
+  - apiKeyQuery: [ ]

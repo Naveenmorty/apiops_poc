@@ -1,0 +1,11 @@
+{
+  "properties": {
+    "displayName": "dotnet-app-1-key",
+    "secret": true,
+    "tags": [
+      "key",
+      "function",
+      "auto"
+    ]
+  }
+}
