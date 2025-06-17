@@ -9,7 +9,7 @@ variables:
   zapFolder: 'zap'
   zapDownloadUrl: 'https://github.com/zaproxy/zaproxy/releases/download/v2.16.1/ZAP_2.16.1_Linux.tar.gz'
   reportName: 'zap_report.html'
-  targetUrl: 'https://example.com'  # 🔁 Replace with your actual target
+  targetUrl: 'https://www.hackerrank.com/'  # 🔁 Replace with your actual target
 
 jobs:
 - job: ZapScan
@@ -34,8 +34,8 @@ jobs:
       inputs:
         targetType: 'inline'
         script: |
-          echo "Looking for zap-baseline.jar..."
-          ZAP_JAR=$(find ${{ variables.zapFolder }} -type f -name "zap-baseline.jar")
+          echo "Looking for zap-2.16.1.jar..."
+          ZAP_JAR=$(find ${{ variables.zapFolder }} -type f -name "zap-2.16.1.jarr")
 
           if [ -z "$ZAP_JAR" ]; then
             echo "ERROR: zap-baseline.jar not found!"
