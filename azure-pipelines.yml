@@ -1,55 +1,32 @@
 trigger:
-- main
+  - main
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'ubuntu-latest'  # or 'windows-latest'
 
-variables:
-  zapVersion: '2.16.1'
-  zapFolder: 'zap'
-  zapDownloadUrl: 'https://github.com/zaproxy/zaproxy/releases/download/v2.16.1/ZAP_2.16.1_Linux.tar.gz'
-  reportName: 'zap_report.html'
-  targetUrl: 'https://www.hackerrank.com/'  # 🔁 Replace with your actual target
+steps:
+  - script: |
+      docker pull owasp/zap2docker-stable
+    displayName: 'Pull OWASP ZAP Docker Image'
 
-jobs:
-- job: ZapScan
-  displayName: 'Install and Run OWASP ZAP Without Docker'
-  steps:
-    - checkout: none
+  - script: |
+      docker run --rm -v $(System.DefaultWorkingDirectory):/zap/wrk owasp/zap2docker-stable \
+        zap-baseline.py \
+        -t https://www.hackerrank.com/ \
+        -r zap-report.html \
+        -x zap-report.xml
+    displayName: 'Run ZAP Baseline Scan'
 
-    - task: Bash@3
-      displayName: 'Download and Extract OWASP ZAP'
-      inputs:
-        targetType: 'inline'
-        script: |
-          mkdir -p ${{ variables.zapFolder }}
-          echo "Downloading ZAP from: ${{ variables.zapDownloadUrl }}"
-          curl -L ${{ variables.zapDownloadUrl }} -o zap.tar.gz
-          tar -xzf zap.tar.gz -C ${{ variables.zapFolder }}
-          echo "Contents of ZAP directory:"
-          ls -R ${{ variables.zapFolder }}
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathtoPublish: '$(System.DefaultWorkingDirectory)/zap-report.html'
+      artifactName: 'ZAP_Report'
+    displayName: 'Publish ZAP HTML Report'
 
-    - task: Bash@3
-      displayName: 'Run ZAP Baseline Scan'
-      inputs:
-        targetType: 'inline'
-        script: |
-          echo "Looking for zap-2.16.1.jar..."
-          ZAP_JAR=$(find ${{ variables.zapFolder }} -type f -name "zap-2.16.1.jar")
-
-          if [ -z "$ZAP_JAR" ]; then
-            echo "ERROR: zap-2.16.1.jar not found!"
-            exit 1
-          fi
-
-          echo "Found JAR at: $ZAP_JAR"
-          java -jar "$ZAP_JAR" \
-            -t ${{ variables.targetUrl }} \
-            -r ${{ variables.reportName }} \
-            -I
-
-    - task: PublishPipelineArtifact@1
-      displayName: 'Publish ZAP Scan Report'
-      inputs:
-        targetPath: '$(System.DefaultWorkingDirectory)/${{ variables.reportName }}'
-        artifactName: 'ZAP-Scan-Report'
+  # Optional: Fail the pipeline if high-risk vulnerabilities are found
+  - script: |
+      if grep -q "High" $(System.DefaultWorkingDirectory)/zap-report.html; then
+        echo "##vso[task.logissue type=error]High-risk vulnerabilities detected!"
+        exit 1
+      fi
+    displayName: 'Check for High-Risk Vulnerabilities'
