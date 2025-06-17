@@ -2,50 +2,42 @@ trigger:
 - main
 
 pool:
-  vmImage: 'windows-latest'
+  vmImage: 'ubuntu-latest'
 
 variables:
   zapVersion: '2.16.1'
   zapFolder: 'zap'
   reportName: 'zap_report.html'
-  targetUrl: 'https://example.com'  # 🔁 Replace this
+  targetUrl: 'https://example.com'  # 🔁 Replace with your site
 
 jobs:
 - job: ZapScan
-  displayName: 'Run OWASP ZAP Without Docker/VM Installer'
+  displayName: 'Run OWASP ZAP Baseline Scan on Linux'
   steps:
     - checkout: none
 
-    - task: PowerShell@2
-      displayName: 'Download and Extract OWASP ZAP (ZIP)'
+    - task: Bash@3
+      displayName: 'Download and Extract OWASP ZAP'
       inputs:
         targetType: 'inline'
         script: |
-          $ErrorActionPreference = 'Stop'
+          mkdir -p ${{ variables.zapFolder }}
+          curl -L https://github.com/zaproxy/zaproxy/releases/download/v${{ variables.zapVersion }}/ZAP_${{ variables.zapVersion }}_Linux.tar.gz -o zap.tar.gz
+          tar -xzf zap.tar.gz -C ${{ variables.zapFolder }}
 
-          $zapZipUrl = "https://github.com/zaproxy/zaproxy/releases/download/v2.16.1/ZAP_2.16.1_Windows.zip"
-          $zipPath = "$(System.DefaultWorkingDirectory)\zap.zip"
-          $extractPath = "$(System.DefaultWorkingDirectory)\${env:zapFolder}"
-
-          Write-Host "Downloading ZAP ZIP from $zapZipUrl"
-          Invoke-WebRequest -Uri $zapZipUrl -OutFile $zipPath
-
-          Write-Host "Extracting ZAP..."
-          Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
-
-    - task: PowerShell@2
+    - task: Bash@3
       displayName: 'Run ZAP Baseline Scan'
       inputs:
         targetType: 'inline'
         script: |
-          $zapJar = Get-ChildItem "$(System.DefaultWorkingDirectory)\${env:zapFolder}" -Recurse -Filter "zap-baseline.jar" | Select-Object -First 1 | ForEach-Object { $_.FullName }
-          $reportPath = "$(System.DefaultWorkingDirectory)\${env:reportName}"
-
-          Write-Host "Running ZAP baseline scan..."
-          & java -jar $zapJar -t $env:targetUrl -r $reportPath -I
+          ZAP_JAR=$(find ${{ variables.zapFolder }} -name "zap-baseline.jar")
+          java -jar "$ZAP_JAR" \
+            -t ${{ variables.targetUrl }} \
+            -r ${{ variables.reportName }} \
+            -I
 
     - task: PublishPipelineArtifact@1
       displayName: 'Publish ZAP Scan Report'
       inputs:
-        targetPath: '$(System.DefaultWorkingDirectory)\$(reportName)'
+        targetPath: '$(System.DefaultWorkingDirectory)/${{ variables.reportName }}'
         artifactName: 'ZAP-Scan-Report'
