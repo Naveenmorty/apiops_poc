@@ -1,37 +1,48 @@
 trigger:
-- main  # or your desired branch
+- main
+
+variables:
+  zapImage: ghcr.io/zaproxy/zaproxy:stable
+  targetUrl: 'https://www.hackerrank.com'
 
 pool:
   vmImage: 'ubuntu-latest'
 
-variables:
-  zapImage: 'ghcr.io/zaproxy/zaproxy:stable'
-  targetUrl: 'https://www.hackerrank.com/'  # Replace with your actual target URL
-  reportName: 'zap_report.html'
+stages:
+- stage: ZapScan
+  displayName: 'OWASP ZAP Baseline Scan'
+  jobs:
+  - job: RunZap
+    displayName: 'Run ZAP Docker Scan'
+    steps:
 
-steps:
-- task: Bash@3
-  displayName: 'Run OWASP ZAP Baseline Scan'
-  inputs:
-    targetType: 'inline'
-    script: |
-      echo "Pulling ZAP Docker image from GHCR..."
-      docker pull ${{ variables.zapImage }}
+    - task: Bash@3
+      displayName: 'Run OWASP ZAP Baseline Scan'
+      inputs:
+        targetType: 'inline'
+        script: |
+          echo "Pulling OWASP ZAP image..."
+          docker pull ${{ variables.zapImage }}
 
-      echo "Creating output directory..."
-      mkdir -p $(Build.ArtifactStagingDirectory)/zap-reports
+          echo "Creating output directory with permissions..."
+          mkdir -p $(Build.ArtifactStagingDirectory)/zap-reports
+          chmod -R 777 $(Build.ArtifactStagingDirectory)/zap-reports
 
-      echo "Running ZAP baseline scan..."
-      docker run --rm \
-        -v $(Build.ArtifactStagingDirectory)/zap-reports:/zap/wrk \
-        ${{ variables.zapImage }} \
-        zap-baseline.py \
-          -t ${{ variables.targetUrl }} \
-          -r ${{ variables.reportName }}
+          echo "Running OWASP ZAP baseline scan..."
+          docker run --rm \
+            -v $(Build.ArtifactStagingDirectory)/zap-reports:/zap/wrk \
+            ${{ variables.zapImage }} \
+            zap-baseline.py \
+              -t "${{ variables.targetUrl }}" \
+              -r zap_report.html \
+              -J zap_report.json \
+              -x zap_report.xml \
+              -d \
+              -I
 
-- task: PublishBuildArtifacts@1
-  displayName: 'Publish ZAP Report'
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)/zap-reports'
-    ArtifactName: 'ZAP-Report'
-    publishLocation: 'Container'
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish ZAP Reports'
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/zap-reports'
+        ArtifactName: 'ZAP-Reports'
+        publishLocation: 'Container'
