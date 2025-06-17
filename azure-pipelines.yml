@@ -35,10 +35,10 @@ jobs:
         targetType: 'inline'
         script: |
           echo "Looking for zap-2.16.1.jar..."
-          ZAP_JAR=$(find ${{ variables.zapFolder }} -type f -name "zap-2.16.1.jarr")
+          ZAP_JAR=$(find ${{ variables.zapFolder }} -type f -name "zap-2.16.1.jar")
 
           if [ -z "$ZAP_JAR" ]; then
-            echo "ERROR: zap-baseline.jar not found!"
+            echo "ERROR: zap-2.16.1.jar not found!"
             exit 1
           fi
 
