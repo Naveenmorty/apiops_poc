@@ -7,12 +7,13 @@ pool:
 variables:
   zapVersion: '2.16.1'
   zapFolder: 'zap'
+  zapDownloadUrl: 'https://github.com/zaproxy/zaproxy/releases/download/v2.16.1/ZAP_2.16.1_Linux.tar.gz'
   reportName: 'zap_report.html'
-  targetUrl: 'https://example.com'  # 🔁 Replace with your site
+  targetUrl: 'https://example.com'  # 🔁 Replace with your actual target
 
 jobs:
 - job: ZapScan
-  displayName: 'Run OWASP ZAP Baseline Scan on Linux'
+  displayName: 'Install and Run OWASP ZAP Without Docker'
   steps:
     - checkout: none
 
@@ -22,15 +23,26 @@ jobs:
         targetType: 'inline'
         script: |
           mkdir -p ${{ variables.zapFolder }}
-          curl -L https://github.com/zaproxy/zaproxy/releases/download/v${{ variables.zapVersion }}/ZAP_${{ variables.zapVersion }}_Linux.tar.gz -o zap.tar.gz
+          echo "Downloading ZAP from: ${{ variables.zapDownloadUrl }}"
+          curl -L ${{ variables.zapDownloadUrl }} -o zap.tar.gz
           tar -xzf zap.tar.gz -C ${{ variables.zapFolder }}
+          echo "Contents of ZAP directory:"
+          ls -R ${{ variables.zapFolder }}
 
     - task: Bash@3
       displayName: 'Run ZAP Baseline Scan'
       inputs:
         targetType: 'inline'
         script: |
-          ZAP_JAR=$(find ${{ variables.zapFolder }} -name "zap-baseline.jar")
+          echo "Looking for zap-baseline.jar..."
+          ZAP_JAR=$(find ${{ variables.zapFolder }} -type f -name "zap-baseline.jar")
+
+          if [ -z "$ZAP_JAR" ]; then
+            echo "ERROR: zap-baseline.jar not found!"
+            exit 1
+          fi
+
+          echo "Found JAR at: $ZAP_JAR"
           java -jar "$ZAP_JAR" \
             -t ${{ variables.targetUrl }} \
             -r ${{ variables.reportName }} \
