@@ -1,0 +1,45 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'windows-latest'  # Using Windows because we're switching to PowerShell
+
+variables:
+  zapVersion: '2.16.1'
+  zapFolder: 'zap'
+  reportName: 'zap_report.html'
+  targetUrl: 'https://www.w3schools.com/'  # 🔁 Replace with your actual target
+
+jobs:
+- job: ZapScan
+  displayName: 'Install and Run OWASP ZAP Without Docker (PowerShell)'
+  steps:
+    - checkout: none
+
+    - task: PowerShell@2
+      displayName: 'Download and Extract OWASP ZAP'
+      inputs:
+        targetType: 'inline'
+        script: |
+          $ErrorActionPreference = 'Stop'
+          $zapInstallerUrl = "https://github.com/zaproxy/zaproxy/releases/download/${env:zapVersion}/ZAP_${env:zapVersion}_Windows.exe"
+          $zapInstallerPath = "$env:Temp\zap_installer.exe"
+          $zapInstallDir = "$(System.DefaultWorkingDirectory)\${env:zapFolder}"
+
+          Invoke-WebRequest -Uri $zapInstallerUrl -OutFile $zapInstallerPath
+          Start-Process -FilePath $zapInstallerPath -ArgumentList "/S", "/D=$zapInstallDir" -Wait
+
+    - task: PowerShell@2
+      displayName: 'Run ZAP Baseline Scan'
+      inputs:
+        targetType: 'inline'
+        script: |
+          $zapJarPath = "$(System.DefaultWorkingDirectory)\${env:zapFolder}\ZAP_${env:zapVersion}\zap-baseline.jar"
+          $reportPath = "$(System.DefaultWorkingDirectory)\${env:reportName}"
+          & "java" -jar $zapJarPath -t $env:targetUrl -r $reportPath -I
+
+    - task: PublishPipelineArtifact@1
+      displayName: 'Publish ZAP Scan Report'
+      inputs:
+        targetPath: '$(System.DefaultWorkingDirectory)\$(reportName)'
+        artifactName: 'ZAP-Scan-Report'
