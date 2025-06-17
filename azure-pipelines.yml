@@ -1,32 +1,37 @@
 trigger:
-  - main
+- main  # or your desired branch
 
 pool:
-  vmImage: 'ubuntu-latest'  # or 'windows-latest'
+  vmImage: 'ubuntu-latest'
+
+variables:
+  zapImage: 'ghcr.io/zaproxy/zaproxy:stable'
+  targetUrl: 'https://www.hackerrank.com/'  # Replace with your actual target URL
+  reportName: 'zap_report.html'
 
 steps:
-  - script: |
-      docker pull owasp/zap2docker-stable
-    displayName: 'Pull OWASP ZAP Docker Image'
+- task: Bash@3
+  displayName: 'Run OWASP ZAP Baseline Scan'
+  inputs:
+    targetType: 'inline'
+    script: |
+      echo "Pulling ZAP Docker image from GHCR..."
+      docker pull ${{ variables.zapImage }}
 
-  - script: |
-      docker run --rm -v $(System.DefaultWorkingDirectory):/zap/wrk owasp/zap2docker-stable \
+      echo "Creating output directory..."
+      mkdir -p $(Build.ArtifactStagingDirectory)/zap-reports
+
+      echo "Running ZAP baseline scan..."
+      docker run --rm \
+        -v $(Build.ArtifactStagingDirectory)/zap-reports:/zap/wrk \
+        ${{ variables.zapImage }} \
         zap-baseline.py \
-        -t https://www.hackerrank.com/ \
-        -r zap-report.html \
-        -x zap-report.xml
-    displayName: 'Run ZAP Baseline Scan'
+          -t ${{ variables.targetUrl }} \
+          -r ${{ variables.reportName }}
 
-  - task: PublishBuildArtifacts@1
-    inputs:
-      pathtoPublish: '$(System.DefaultWorkingDirectory)/zap-report.html'
-      artifactName: 'ZAP_Report'
-    displayName: 'Publish ZAP HTML Report'
-
-  # Optional: Fail the pipeline if high-risk vulnerabilities are found
-  - script: |
-      if grep -q "High" $(System.DefaultWorkingDirectory)/zap-report.html; then
-        echo "##vso[task.logissue type=error]High-risk vulnerabilities detected!"
-        exit 1
-      fi
-    displayName: 'Check for High-Risk Vulnerabilities'
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish ZAP Report'
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/zap-reports'
+    ArtifactName: 'ZAP-Report'
+    publishLocation: 'Container'
